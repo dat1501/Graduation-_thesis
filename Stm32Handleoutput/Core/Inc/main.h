@@ -59,6 +59,12 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LighSensor_Pin GPIO_PIN_1
 #define LighSensor_GPIO_Port GPIOB
+#define Fan_Pin GPIO_PIN_13
+#define Fan_GPIO_Port GPIOB
+#define Light_Pin GPIO_PIN_14
+#define Light_GPIO_Port GPIOB
+#define Motor_Pin GPIO_PIN_15
+#define Motor_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

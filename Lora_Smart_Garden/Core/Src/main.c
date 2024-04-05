@@ -143,29 +143,31 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if(LoRa_transmit(&myLoRa, TxData, 6, 100))
+
+	  if(LoRa_transmit(&myLoRa, TxData, 8, 1000))
 	  {
-	  	  HAL_Delay(500);
+	  	  HAL_Delay(150);
 	  	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	  	  HAL_IWDG_Refresh(&hiwdg);
 	  	  Rx_start = 0;
 	  };
-	  TxDataUart[0] = 1;
-	  TxDataUart[1] = 2;
-	  TxDataUart[2] = 3;
-	  TxDataUart[3] = 4;
-	  TxDataUart[4] = 5;
-	  TxDataUart[5] = 6;
+	  TxDataUart[0] = RxData[1];
+	  TxDataUart[1] = RxData[2];
+	  TxDataUart[2] = RxData[3];
+	  TxDataUart[3] = RxData[4];
 	  ret = HAL_UART_Transmit(&huart1, TxDataUart, 8, 1000);
 	  if(ret == HAL_OK)
 	  {
 //		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 	  }
-	  TxData[0] = 0x01; 		// Address receiver;
-	  TxData[1] = RxDataUart[0];  //  Sensor Light
-	  TxData[2] = RxDataUart[1];  // Sensor earth humidity
-	  TxData[3] = RxDataUart[2];  // Air Temperature
-	  TxData[4] = RxDataUart[3];  // Air humidity
+	  TxData[0] = 0x01; 			// Address receiver;
+	  TxData[1] = RxDataUart[0];  	//  Sensor Light
+	  TxData[2] = RxDataUart[1];  	// Sensor earth humidity
+	  TxData[3] = RxDataUart[2];  	// Air Temperature
+	  TxData[4] = RxDataUart[3];  	// Air humidity
+	  TxData[5] = RxDataUart[4];  	// Light State
+	  TxData[6] = RxDataUart[5];  	// Motor State
+	  TxData[7] = RxDataUart[6];  	// Fan State
   }
   /* USER CODE END 3 */
 }
@@ -222,7 +224,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		if(ledData != RxData[1])
 		{
 			ledData = RxData[1];
-//			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RxData[1]);
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RxData[1]);
 //			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 		}
 //		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
