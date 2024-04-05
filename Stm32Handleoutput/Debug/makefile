@@ -52,6 +52,12 @@ default.size.stdout \
 OBJDUMP_LIST += \
 Stm32Handleoutput.list \
 
+OBJCOPY_HEX += \
+Stm32Handleoutput.hex \
+
+OBJCOPY_BIN += \
+Stm32Handleoutput.bin \
+
 
 # All Target
 all: main-build
@@ -60,8 +66,8 @@ all: main-build
 main-build: Stm32Handleoutput.elf secondary-outputs
 
 # Tool invocations
-Stm32Handleoutput.elf Stm32Handleoutput.map: $(OBJS) $(USER_OBJS) C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\Stm32Handleoutput\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Stm32Handleoutput.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\Stm32Handleoutput\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Stm32Handleoutput.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Stm32Handleoutput.elf Stm32Handleoutput.map: $(OBJS) $(USER_OBJS) C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\STM32CubeIDE_1.14.0\Stm32Handleoutput\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Stm32Handleoutput.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\STM32CubeIDE_1.14.0\Stm32Handleoutput\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Stm32Handleoutput.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -75,12 +81,22 @@ Stm32Handleoutput.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEP
 	@echo 'Finished building: $@'
 	@echo ' '
 
+Stm32Handleoutput.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "Stm32Handleoutput.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
+Stm32Handleoutput.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "Stm32Handleoutput.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) Stm32Handleoutput.elf Stm32Handleoutput.list Stm32Handleoutput.map default.size.stdout
+	-$(RM) Stm32Handleoutput.bin Stm32Handleoutput.elf Stm32Handleoutput.hex Stm32Handleoutput.list Stm32Handleoutput.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

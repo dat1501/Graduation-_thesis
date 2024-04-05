@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "iwdg.h"
 #include "spi.h"
 #include "tim.h"
@@ -50,8 +51,10 @@
 /* USER CODE BEGIN PV */
 LoRa myLoRa;
 uint8_t LoraState = 0;
-uint8_t TxData[256] = {0};
-uint8_t RxData[256] = {0};
+static uint8_t TxData[128] = {0};
+static uint8_t RxData[128] = {0};
+static uint8_t RxDataUart[8];
+static uint8_t TxDataUart[8];
 uint8_t Rx_start = 0;
 volatile static uint8_t ledData;
 DHT_DataTypedef DHT_DATA;
@@ -99,12 +102,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_IWDG_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t RxDataUart[5];
+  uint8_t ret;
+//  HAL_UART_Receive_IT(&huart1, RxDataUart, 6);
+  HAL_UART_Receive_DMA(&huart1, RxDataUart, 8);
   myLoRa = newLoRa();
 
   myLoRa.CS_port         = NSS_GPIO_Port;
@@ -120,7 +126,7 @@ int main(void)
 	  LoraState = 1;
   }
   LoRa_startReceiving(&myLoRa);
-  HAL_Delay(2000);
+//  HAL_Delay(2000);
 //  TxData[0] = LocalAddress;
 //  for(index = 1; index < 10; index++)
 //  {
@@ -137,20 +143,29 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if(LoRa_transmit(&myLoRa, TxData, 8, 100))
+	  if(LoRa_transmit(&myLoRa, TxData, 6, 100))
 	  {
-	  	  HAL_Delay(1000);
+	  	  HAL_Delay(500);
 	  	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-	  	  //		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_6);
 	  	  HAL_IWDG_Refresh(&hiwdg);
 	  	  Rx_start = 0;
 	  };
-	  HAL_UART_Receive(&huart1, RxDataUart, 5, 1000);
-
-
-//	  DHT_GetData(&DHT_DATA);
-//	  TxData[2] = DHT_DATA.Temperature;
-//	  TxData[3] = DHT_DATA.Humidity;
+	  TxDataUart[0] = 1;
+	  TxDataUart[1] = 2;
+	  TxDataUart[2] = 3;
+	  TxDataUart[3] = 4;
+	  TxDataUart[4] = 5;
+	  TxDataUart[5] = 6;
+	  ret = HAL_UART_Transmit(&huart1, TxDataUart, 8, 1000);
+	  if(ret == HAL_OK)
+	  {
+//		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
+	  }
+	  TxData[0] = 0x01; 		// Address receiver;
+	  TxData[1] = RxDataUart[0];  //  Sensor Light
+	  TxData[2] = RxDataUart[1];  // Sensor earth humidity
+	  TxData[3] = RxDataUart[2];  // Air Temperature
+	  TxData[4] = RxDataUart[3];  // Air humidity
   }
   /* USER CODE END 3 */
 }
@@ -207,16 +222,51 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		if(ledData != RxData[1])
 		{
 			ledData = RxData[1];
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, ledData);
+//			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RxData[1]);
+//			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 		}
+//		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 	}
-//	DHT_GetData(&DHT);
-//	TxData[2] = DHT.Temperature;
-//	TxData[3] = DHT.Humidity;
-//	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_6);
+
+//	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 }
 
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//	if(huart->Instance == huart1.Instance)
+//	{
+//		HAL_UART_Receive_IT(&huart1, RxDataUart, 4);
+//		TxData[0] = 0x01; 		// Address receiver;
+//		TxData[1] = RxDataUart[0];  //  Sensor Light
+//		TxData[2] = RxDataUart[1];  // Sensor earth humidity
+//		TxData[3] = RxDataUart[2];  // Air Temperature
+//		TxData[4] = RxDataUart[3];  // Air humidity
+//		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
+//	}
+//}
+
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM3 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM3) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

@@ -28,7 +28,8 @@ char ssid[] = "NA__";
 char pass[] = "30151998";
 SimpleTimer timer;
 
-char data[20] ;
+static byte RxData[20];
+static byte TxData[20];
 char address;
 byte message = 0;
 byte LocalAddress = 0x01;               //--> address of this device (Master Address).
@@ -39,7 +40,7 @@ void sendMessage(byte Outgoing, byte Destination) {
   LoRa.beginPacket();             //--> start packet
   LoRa.write(LocalAddress);        //--> add destination address
   // LoRa.write(LocalAddress);       //--> add sender address
-  LoRa.write(message);       //--> add sender address
+  LoRa.write(TxData[1]);       //--> add sender address
   // LoRa.print(Outgoing);           //--> add payload
   LoRa.endPacket();               //--> finish packet and send it
   // Serial.println("Transmit successfull!");
@@ -50,23 +51,28 @@ void onReceive(int packetSize) {
   if (packetSize == 0)
   {
     // Serial.print("there's no packet");
-    // delay(100);
+    delay(100);
     return;  //--> if there's no packet, return
   }
-  for(i = 0; i<20; i++)
+  for(i = 0; i<6; i++)
   {
-    data[i] = LoRa.read();
+    RxData[i] = LoRa.read();
     delay(1);
   }
   //---------------------------------------- if message is for this device, or broadcast, print details:
   Serial.println();
-  Serial.println("Received from: 0x" + String(data[0], HEX));
-  Serial.println("Data: " + String(data, 20));
+  Serial.println("Received from: 0x" + String(RxData[0], HEX));
+  Serial.println("Data: ");
+  Serial.println("0x" + String(RxData[1], HEX));
+  Serial.println("0x" + String(RxData[2], HEX));
+  Serial.println(" 0x" +String(RxData[3], HEX));
+  Serial.println("0x" + String(RxData[4], HEX));
+  Serial.println(" 0x" +String(RxData[5], HEX));
   // sendMessage(message, Destination_ESP32_Slave_1);
   // sendMessage(message , 0x02);
 }
 
-BLYNK_WRITE(V0) { // Led control
+BLYNK_WRITE(V0) { // User option
   int value;
   value = param.asInt();
   digitalWrite(LED_PIN, value);
@@ -74,16 +80,71 @@ BLYNK_WRITE(V0) { // Led control
   if(value == 0)
   {
     message = 0;
+    TxData[1] = 0;
+    Serial.println(TxData[1]);
   }
   else
   {
     message = 1;
+    TxData[1] = 1;
+    Serial.println(TxData[1]);
+  }
+}
+
+BLYNK_WRITE(V5) { // Motor control
+  int value;
+  
+  // Serial.println(value);
+  if(TxData[1] == 0)
+  {
+    // do nothing
+  }
+  else
+  {
+    value = param.asInt();
+    if(value == 0)
+    {
+
+    }
+    else
+    {
+    }
+  }
+  
+}
+
+BLYNK_WRITE(V6) { // Led control
+  int value;
+  // value = param.asInt();
+  // digitalWrite(LED_PIN, value);
+  // Serial.println(value);
+  if(TxData[1] == 0)
+  {
+    // do nothing
+  }
+  else
+  {
+    value = param.asInt();
+    if(value == 0)
+    {
+    }
+    else
+    {
+    }
   }
 }
 
 void sendUptime()
 {
-
+  Blynk.virtualWrite(V1, RxData[3]); // write Air temperature data to display on web blynk 
+  Blynk.virtualWrite(V2, RxData[4]); // write Air humidity data to display on web blynk 
+  Blynk.virtualWrite(V3, RxData[2]); // write Earth himidity data to display on web blynk 
+  Blynk.virtualWrite(V4, RxData[1]); // write light Data data to display on web blynk
+  if(TxData[1] == 0)
+  {
+    Blynk.virtualWrite(V5, RxData[5]);
+    Blynk.virtualWrite(V6, RxData[6]);
+  }
 }
 
 void setup() {
@@ -100,7 +161,7 @@ void setup() {
   }
   Serial.println("LoRa init succeeded.");
   
-  timer.setInterval(200, sendUptime);
+  timer.setInterval(10, sendUptime);
 }
 
 void loop() {
@@ -110,8 +171,9 @@ void loop() {
   unsigned long currentMillis_SendMSG = millis();
   if (currentMillis_SendMSG - previousMillis_SendMSG >= 500)
   {
-    sendMessage(message, Destination_ESP32_Slave_1);
+    sendMessage(TxData[1], Destination_ESP32_Slave_1);
+    // digitalWrite(LED_PIN, !digitalRead(LED_PIN));
   }
+  // delay(10);
   onReceive(LoRa.parsePacket());
-  delay(10);
 }

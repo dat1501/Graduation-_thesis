@@ -1,4 +1,4 @@
-../Core/Src/dht.c:28:6:delay_us	16	static
-../Core/Src/dht.c:34:9:DHT11_Start	32	static
-../Core/Src/dht.c:65:9:DHT11_Read	16	static
-../Core/Src/dht.c:91:6:DHT_GetData	16	static
+../Core/Src/dht.c:27:6:delay_us	16	static
+../Core/Src/dht.c:33:9:DHT11_Start	32	static
+../Core/Src/dht.c:64:9:DHT11_Read	16	static
+../Core/Src/dht.c:90:6:DHT_GetData	16	static

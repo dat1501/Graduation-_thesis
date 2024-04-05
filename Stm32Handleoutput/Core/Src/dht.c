@@ -8,7 +8,6 @@
 #include "DHT.h"
 
 #define TYPE_DHT11    // define according to your sensor
-//#define TYPE_DHT22
 
 
 //#define DHT_PORT GPIOA

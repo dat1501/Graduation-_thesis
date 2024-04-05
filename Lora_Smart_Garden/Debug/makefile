@@ -52,6 +52,12 @@ default.size.stdout \
 OBJDUMP_LIST += \
 Lora_Smart_Garden.list \
 
+OBJCOPY_HEX += \
+Lora_Smart_Garden.hex \
+
+OBJCOPY_BIN += \
+Lora_Smart_Garden.bin \
+
 
 # All Target
 all: main-build
@@ -60,8 +66,8 @@ all: main-build
 main-build: Lora_Smart_Garden.elf secondary-outputs
 
 # Tool invocations
-Lora_Smart_Garden.elf Lora_Smart_Garden.map: $(OBJS) $(USER_OBJS) C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\Lora_Smart_Garden\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Lora_Smart_Garden.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\Lora_Smart_Garden\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lora_Smart_Garden.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Lora_Smart_Garden.elf Lora_Smart_Garden.map: $(OBJS) $(USER_OBJS) C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\STM32CubeIDE_1.14.0\Lora_Smart_Garden\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Lora_Smart_Garden.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\ADMIN\STM32CubeIDE\workspace_1.14.1\STM32CubeIDE_1.14.0\Lora_Smart_Garden\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lora_Smart_Garden.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -75,12 +81,22 @@ Lora_Smart_Garden.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEP
 	@echo 'Finished building: $@'
 	@echo ' '
 
+Lora_Smart_Garden.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "Lora_Smart_Garden.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
+Lora_Smart_Garden.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "Lora_Smart_Garden.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) Lora_Smart_Garden.elf Lora_Smart_Garden.list Lora_Smart_Garden.map default.size.stdout
+	-$(RM) Lora_Smart_Garden.bin Lora_Smart_Garden.elf Lora_Smart_Garden.hex Lora_Smart_Garden.list Lora_Smart_Garden.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

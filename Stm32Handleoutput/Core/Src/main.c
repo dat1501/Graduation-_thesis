@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,7 +27,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "dht.h"
-
+DHT_DataTypedef DHT_DATA;
+uint8_t RxData[8];
+uint8_t TxData[8];
+uint8_t resultUart;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-DHT_DataTypedef DHT_Data;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,8 +62,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-DHT_DataTypedef DHT_DATA;
-//void delay_us(volatile uint32_t microseconds);
 
 /* USER CODE END 0 */
 
@@ -70,7 +72,6 @@ DHT_DataTypedef DHT_DATA;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-//	uint32_t count;
 
   /* USER CODE END 1 */
 
@@ -80,11 +81,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-//  uint32_t tick;
-  static uint8_t sensorLight = 0;
-  static uint32_t huminityValue = 0;
-  uint8_t TxData[5];
+  	volatile static uint8_t sensorLight = 0;
+    volatile static uint32_t huminityValue = 0;
 
+    static uint32_t tick;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -96,33 +96,31 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   MX_TIM1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start(&htim2);
   HAL_TIM_Base_Start(&htim1);
-
+  HAL_Delay(1500);
+//  HAL_UART_Receive_IT(&huart1, RxData, 8);
+  HAL_UART_Receive_DMA(&huart1, RxData, 8);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_Delay(1500);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	  HAL_Delay(2000);
-//	  delay_us(50000);//delay 200ms
-//	  tick = HAL_GetTick();
-//	  while((HAL_GetTick() - tick) < 100);
+
 
 	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
 	  DHT_GetData(&DHT_DATA);
 	  sensorLight = HAL_GPIO_ReadPin(LighSensor_GPIO_Port, LighSensor_Pin);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, sensorLight);
+//	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, sensorLight);
 	  HAL_ADC_Start(&hadc1);
 	  huminityValue = HAL_ADC_GetValue(&hadc1);
 	  huminityValue = huminityValue/40;
@@ -130,8 +128,13 @@ int main(void)
 	  TxData[1] = (uint8_t)huminityValue;
 	  TxData[2] = DHT_DATA.Temperature;
 	  TxData[3] = DHT_DATA.Humidity;
-	  HAL_UART_Transmit(&huart1, TxData, 5, 1000);
-//	  HAL_Delay(5000);
+	  HAL_Delay(500);
+	  resultUart = HAL_UART_Transmit(&huart1, TxData, 8, 1000);
+
+	  if(resultUart == HAL_OK)
+	  {
+		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
+	  }
   }
   /* USER CODE END 3 */
 }
@@ -183,23 +186,16 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-//void delay_1us(volatile uint32_t microseconds)
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 //{
-//  __HAL_TIM_SET_COUNTER(&htim1,0);  // set the counter value a 0
-//  	while (__HAL_TIM_GET_COUNTER(&htim1) < microseconds*72);  // wait for the counter to reach the us input in the parameter
-//}
+//	if(huart->Instance == huart1.Instance)
+//	{
+//		HAL_UART_Receive_IT(&huart1, RxData, 8);
+//		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_10);
+//	}
 //
-//void delay_1Ms(void)
-//{
-//  __HAL_TIM_SET_COUNTER(&htim1,0);  // set the counter value a 0
-//  	while (__HAL_TIM_GET_COUNTER(&htim1) < 1000);
 //}
-//
-//void delay_Ms(uint32_t Ms)
-//{
-//  __HAL_TIM_SET_COUNTER(&htim1,0);  // set the counter value a 0
-//  	while (__HAL_TIM_GET_COUNTER(&htim1) < 1000);
-//}
+
 /* USER CODE END 4 */
 
 /**
