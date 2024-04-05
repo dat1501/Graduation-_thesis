@@ -1,0 +1,6 @@
+* Stm32 handle Sensor and output(Stm32_1)
+1. Led control State of transmit uart if uart transmit successfull, Led is going to Toggle
+* Stm32 handle transmit and rev Lora and Uart(Stm32_2)
+1. led control State of transmit uart if uart transmit successfull, led is going to Toggle
+2. Led control state of stransmit Lora and Rev Lora packet
+if transmit and Rev successfull, Led is going to Toggle
