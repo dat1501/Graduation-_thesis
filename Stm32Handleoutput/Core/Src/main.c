@@ -83,11 +83,10 @@ int main(void)
   /* USER CODE BEGIN Init */
   	volatile static uint8_t sensorLight = 0;
     volatile static uint32_t huminityValue = 0;
-    static uint8_t UserOption = 0;
+    static uint8_t UserOption;
     static uint8_t LightState;
     static uint8_t MotorState;
     static uint8_t FanState;
-    static uint32_t tick;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -104,11 +103,12 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM1_Init();
   MX_ADC1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim1);
   HAL_Delay(1500);
 //  HAL_UART_Receive_IT(&huart1, RxData, 8);
-  HAL_UART_Receive_DMA(&huart1, RxData, 8);
+  HAL_UART_Receive_DMA(&huart2, RxData, 8);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -138,23 +138,16 @@ int main(void)
 	  TxData[1] = (uint8_t)huminityValue;
 	  TxData[2] = DHT_DATA.Temperature;
 	  TxData[3] = DHT_DATA.Humidity;
-	  TxData[4] = LightState;
-	  TxData[5] = MotorState;
-	  TxData[6] = FanState;
-	  HAL_Delay(500);
-	  resultUart = HAL_UART_Transmit(&huart1, TxData, 8, 1000);
 
-	  if(resultUart == HAL_OK)
-	  {
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
-	  }
+	  HAL_Delay(500);
+
 	  UserOption = RxData[0]; 	// assign UserOption equal User data receive via Uart
-	  LightState = RxData[1];	// assign LightState equal Light data receive via Uart
-	  MotorState = RxData[2];	// assign MotorState equal Motor data receive via Uart
-	  FanState = RxData[3];		// assign FanState equal Fan data receive via Uart
 	  /* Check user option */
 	  if(UserOption == 0)
 	  {
+		  LightState = RxData[1];	// assign LightState equal Light data receive via Uart
+		  MotorState = RxData[2];	// assign MotorState equal Motor data receive via Uart
+		  FanState = RxData[3];		// assign FanState equal Fan data receive via Uart
 		  /* compare light state if light state on or off as soon as Turn on the light*/
 		  if(LightState == 1)
 		  {
@@ -175,15 +168,56 @@ int main(void)
 			  HAL_GPIO_WritePin(Fan_GPIO_Port, Fan_Pin, FanState);
 		  }
 		  else HAL_GPIO_WritePin(Fan_GPIO_Port, Fan_Pin, FanState);
+
+		  TxData[4] = LightState;
+		  TxData[5] = MotorState;
+		  TxData[6] = FanState;
+
 	  }
 	  else if(UserOption == 1)
 	  {
 		  /*To do: control output to handle Motor, light, Fan*/
 		  if(sensorLight == 1)
 		  {
-			  HAL_GPIO_WritePin(LighSensor_GPIO_Port, LighSensor_Pin, sensorLight);
+			  HAL_GPIO_WritePin(LighSensor_GPIO_Port, LighSensor_Pin, GPIO_PIN_SET);
+			  LightState = 1;
 		  }
-		  else HAL_GPIO_WritePin(LighSensor_GPIO_Port, LighSensor_Pin, sensorLight);
+		  else
+		  {
+			  HAL_GPIO_WritePin(LighSensor_GPIO_Port, LighSensor_Pin, GPIO_PIN_RESET);
+			  LightState = 0;
+		  }
+		  /* */
+		  if(DHT_DATA.Temperature >= 40 || DHT_DATA.Humidity <=70)
+		  {
+			  HAL_GPIO_WritePin(Fan_GPIO_Port, Fan_Pin, GPIO_PIN_SET);
+			  FanState = 1;
+		  }
+		  else
+		  {
+			  HAL_GPIO_WritePin(Fan_GPIO_Port, Fan_Pin, GPIO_PIN_RESET);
+			  FanState = 0;
+		  }
+
+		  if(huminityValue <40)
+		  {
+			  HAL_GPIO_WritePin(Motor_GPIO_Port, Motor_Pin, GPIO_PIN_SET);
+			  MotorState = 1;
+		  }
+		  else
+		  {
+			  HAL_GPIO_WritePin(Motor_GPIO_Port, Motor_Pin, GPIO_PIN_RESET);
+			  MotorState = 0;
+		  }
+		  TxData[4] = LightState;
+		  TxData[5] = MotorState;
+		  TxData[6] = FanState;
+	  }
+	  resultUart = HAL_UART_Transmit(&huart2, TxData, 8, 100);
+
+	  if(resultUart == HAL_OK)
+	  {
+	  	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
 	  }
   }
   /* USER CODE END 3 */

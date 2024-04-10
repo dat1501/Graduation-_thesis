@@ -51,8 +51,8 @@
 /* USER CODE BEGIN PV */
 LoRa myLoRa;
 uint8_t LoraState = 0;
-static uint8_t TxData[128] = {0};
-static uint8_t RxData[128] = {0};
+static uint8_t TxData[10] = {0};
+static uint8_t RxData[10] = {0};
 static uint8_t RxDataUart[8];
 static uint8_t TxDataUart[8];
 uint8_t Rx_start = 0;
@@ -107,10 +107,11 @@ int main(void)
   MX_USART1_UART_Init();
   MX_IWDG_Init();
   MX_TIM1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   uint8_t ret;
-//  HAL_UART_Receive_IT(&huart1, RxDataUart, 6);
-  HAL_UART_Receive_DMA(&huart1, RxDataUart, 8);
+//  HAL_UART_Receive_IT(&huart1, RxDataUart, 8);
+  HAL_UART_Receive_DMA(&huart2, RxDataUart, 8);
   myLoRa = newLoRa();
 
   myLoRa.CS_port         = NSS_GPIO_Port;
@@ -151,10 +152,7 @@ int main(void)
 	  	  HAL_IWDG_Refresh(&hiwdg);
 	  	  Rx_start = 0;
 	  };
-	  TxDataUart[0] = RxData[1];
-	  TxDataUart[1] = RxData[2];
-	  TxDataUart[2] = RxData[3];
-	  TxDataUart[3] = RxData[4];
+
 	  ret = HAL_UART_Transmit(&huart1, TxDataUart, 8, 1000);
 	  if(ret == HAL_OK)
 	  {
@@ -220,13 +218,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if(GPIO_Pin == DIO0_Pin)
 	{
 		Rx_start = 1;
-		LoRa_receive(&myLoRa,RxData,5);
+		LoRa_receive(&myLoRa,RxData,8);
 		if(ledData != RxData[1])
 		{
 			ledData = RxData[1];
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RxData[1]);
+
 //			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 		}
+		TxDataUart[0] = RxData[1]; // user option
+		TxDataUart[1] = RxData[2]; // light control
+		TxDataUart[2] = RxData[3]; // motor control
+		TxDataUart[3] = RxData[4]; // fan control
 //		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 	}
 
